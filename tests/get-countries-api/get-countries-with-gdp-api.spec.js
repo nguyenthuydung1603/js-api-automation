@@ -2,7 +2,7 @@ const { test, expect } = require("@playwright/test");
 const { request } = require("http");
 const Ajv = require("ajv");
 const ajv = new Ajv();
-const getCountriesWithGDPJsonSchema = require("../../data/get-countries-api/get-countries-api-with-gdp-json-schema.json");
+const getCountriesWithGDPJsonSchema = require("../../data/get-countries-api/get-countries-with-gdp-api-json-schema.json");
 const {expectedCountriesWithGDP} = require("../../data/get-countries-api/get-countries-with-gdp-expected-response")
 
 test("Verify getCountriesWithGDP API json schema", async ({ request }) => {
