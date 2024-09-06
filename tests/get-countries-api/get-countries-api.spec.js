@@ -2,11 +2,14 @@ const { test, expect } = require("@playwright/test");
 const Ajv = require("ajv");
 const ajv = new Ajv();
 const getCountriesJsonSchema = require("../../data/get-countries-api/get-countries-api-json-schema.json");
-const getCountriesByFilterSchema = require("../../data/get-countries-by-filter-api/get-countries-by-filter-api-json-schema.json")
+const getCountriesByFilterSchema = require("../../data/get-countries-by-filter-api/get-countries-by-filter-api-json-schema.json");
 const { request } = require("http");
 const {
   expectedCountries,
 } = require("../../data/get-countries-api/get-countries-expected-response");
+const { not } = require("ajv/dist/compile/codegen");
+const { notEqual } = require("assert");
+const { assert } = require("console");
 
 test.beforeEach(async () => {
   console.log("before each");
@@ -68,25 +71,63 @@ expectedCountries.forEach((country) => {
   });
 });
 
-test(`Verify get country by gdp filter greater than 5000`, async ({request}) => {
-  const url = `${baseUrl}/api/v3/countries`;
-  const response = await request.get(url,{
-    params:{
-      gdp: 5000,
-      operator:'>'
-    }
+[
+  {
+    operator: ">",
+    gdp: 1000,
+    assertion: function (actualGdp) {
+      expect(actualGdp).toBeGreaterThan(this.gdp);
+    },
+  },
+  {
+    operator: "<",
+    gdp: 2000,
+    assertion: function (actualGdp) {
+      expect(actualGdp).toBeLessThan(this.gdp);
+    },
+  },
+  {
+    operator: ">=",
+    gdp: 3000,
+    assertion: function (actualGdp) {
+      expect(actualGdp).toBeGreaterThanOrEqual(this.gdp);
+    },
+  },
+  {
+    operator: "<=",
+    gdp: 5000,
+    assertion: function (actualGdp) {
+      expect(actualGdp).toBeLessThanOrEqual(this.gdp);
+    },
+  },
+  {
+    operator: "==",
+    gdp: 4000,
+    assertion: function (actualGdp) {
+      expect(actualGdp).toBe(this.gdp);
+    },
+  },
+  {
+    operator: "!=",
+    gdp: 6000,
+    assertion: function (actualGdp) {
+      expect(actualGdp).not.toBe(this.gdp);
+    },
+  },
+].forEach((data) => {
+  test(`Verify get country by gdp filter ${data.operator} ${data.gdp}`, async ({
+    request,
+  }) => {
+    const url = `${baseUrl}/api/v3/countries`;
+    const response = await request.get(url, {
+      params: {
+        gdp: data.gdp,
+        operator: data.operator,
+      },
+    });
+    const actualResponseBody = await response.json();
+    actualResponseBody.forEach((item) => {
+      data.assertion(item.gdp);
+    });
   });
-  const actualResponseBody = await response.json();
-  actualResponseBody.forEach(item => {
-    expect(item.gdp).toBeGreaterThan(5000);
-  });
-
-
-  // const validator = ajv.compile(getCountriesByFilterSchema);
-  // const validateResult = validator(actualResponseBody);
-  // console.log("Validator errors: ", validator.error);
-  // console.log("API info: ", { url, actualResponseBody});
-  // expect(validateResult).toBeTruthy();
-  // expect(response.status()).toBe(200);
-
-})
+});
