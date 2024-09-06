@@ -2,8 +2,8 @@ const { test, expect } = require("@playwright/test");
 const { request } = require("http");
 const Ajv = require("ajv");
 const ajv = new Ajv();
-const getCountriesByCodePJsonSchema = require("../../data/get-countries-api/get-countries-by-code-api-json-schema.json");
-const {expectedCountriesByCode} = require("../../data/get-countries-api/get-countries-by-code-expected-response")
+const getCountriesByCodePJsonSchema = require("../../data/get-countries-by-code-api/get-countries-by-code-api-json-schema.json");
+const {expectedCountriesByCode} = require("../../data/get-countries-by-code-api/get-countries-by-code-expected-response")
 
 test("Verify getCountriesByCode API json schema", async ({ request }) => {
   const url = "http://localhost:3000/api/v1/countries/VN";
