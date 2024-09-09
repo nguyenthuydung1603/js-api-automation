@@ -3,6 +3,7 @@ const Ajv = require("ajv");
 const ajv = new Ajv();
 const getCountriesJsonSchema = require("../../data/get-countries-api/get-countries-api-json-schema.json");
 const getCountriesByFilterSchema = require("../../data/get-countries-by-filter-api/get-countries-by-filter-api-json-schema.json");
+const getCountriesWithPagination = require("../../data/get-countries-with-pagination/get-countries-with-pagination-api-json-schema.json");
 const { request } = require("http");
 const {
   expectedCountries,
@@ -10,6 +11,7 @@ const {
 const { not } = require("ajv/dist/compile/codegen");
 const { notEqual } = require("assert");
 const { assert } = require("console");
+const exp = require("constants");
 
 test.beforeEach(async () => {
   console.log("before each");
@@ -131,3 +133,90 @@ expectedCountries.forEach((country) => {
     });
   });
 });
+
+async function getCountriesWithPaginationMethod(request, page, size) {
+  const url = `${baseUrl}/api/v4/countries`;
+  return await request.get(url, {
+    params: {
+      page: page,
+      size: size,
+    },
+  });
+}
+
+test(`Verify get countries with pagination`, async ({ request }) => {
+  let size = 4;
+  //Verify first page
+  const firstPageResponse = await getCountriesWithPaginationMethod(
+    request,
+    1,
+    size
+  );
+  const actualFirstPageResponseBody = await firstPageResponse.json();
+  const validator = ajv.compile(getCountriesWithPagination);
+  const validateResult = validator(actualFirstPageResponseBody);
+  console.log("Validator errors: ", validator.error);
+  console.log("First Page API infor: ", {
+    actualFirstPageResponseBody: JSON.stringify(actualFirstPageResponseBody),
+  });
+  expect(firstPageResponse.status()).toBe(200);
+  expect(validateResult).toBeTruthy();
+  expect(actualFirstPageResponseBody.data.length).toBe(size);
+
+  //Verify second page
+  const secondPageResponse = await getCountriesWithPaginationMethod(
+    request,
+    2,
+    size
+  );
+  const actualSecondPageResponseBody = await secondPageResponse.json();
+  console.log("Second Page API infor: ", {
+    actualSecondPageResponseBody: JSON.stringify(actualSecondPageResponseBody),
+  });
+  expect(secondPageResponse.status()).toBe(200);
+  expect(actualSecondPageResponseBody.data.length).toBe(size);
+  expect(actualSecondPageResponseBody.data).not.toEqual(
+    expect.arrayContaining(actualFirstPageResponseBody.data)
+  );
+
+  //Verify last page
+  const lastPage = Math.ceil(actualFirstPageResponseBody.total / size);
+  const lastPageLength = actualFirstPageResponseBody.total % size;
+  const lastPageResponse = await getCountriesWithPaginationMethod(
+    request,
+    lastPage,
+    size
+  );
+  const actualLastPageResponseBody = await lastPageResponse.json();
+  console.log("Last Page API infor: ", {
+    actualLastPageResponseBody: JSON.stringify(actualLastPageResponseBody),
+  });
+  expect(lastPageResponse.status()).toBe(200);
+  expect(actualLastPageResponseBody.data.length).toBe(lastPageLength);
+
+  //Verify last page plus one
+  const lastPagePlusResponse = await getCountriesWithPaginationMethod(
+    request,
+    lastPage+1,
+    size
+  );
+  const actualLastPagePlusResponseBody = await lastPagePlusResponse.json();
+  console.log("Last Page API infor: ", {
+    actualLastPagePlusResponseBody: JSON.stringify(actualLastPagePlusResponseBody),
+  });
+  expect(lastPagePlusResponse.status()).toBe(200);
+  expect(actualLastPagePlusResponseBody.data.length).toBe(0);
+});
+
+test(`Verify get countries with header`, async ({request}) =>{
+  const url = `${baseUrl}/api/v5/countries`;
+  console.log("Url: ",url);
+  const response = await request.get(url, {
+    headers:{
+      'api-key' : 'private'
+    }
+  });
+  const actualResponse = await response.json();
+  console.log(actualResponse);
+});
+// test hoàn chỉnh cover 4 trường hợp xảy ra: invalid, valid, null, empty
