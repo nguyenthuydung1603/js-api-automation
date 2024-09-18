@@ -13,12 +13,16 @@
         },
         "gdp": {
           "type": "number"
+        },
+        "private": {
+          "type": "number"
         }
       },
       "required": [
         "name",
         "code",
-        "gdp"
+        "gdp",
+        "private"
       ]
     }
   }
