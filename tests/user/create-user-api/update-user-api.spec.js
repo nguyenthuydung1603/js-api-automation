@@ -101,4 +101,82 @@ await request.delete(`${DELETE_USER_API}/${jsonCreateUserResponse.id}`, {
     });
 });
 
+// ////////////////////////////////////////////////
+test("Verify user update successfully by database query", async ({request})=>{
+    let requestBody = _.cloneDeep(userRequestBodyTemplate); 
+//Create user
+    const createUserResponse = await request.post(CREATE_USER_API, {
+        headers: {
+        Authorization: token,
+    },
+        data: requestBody,
+});
+const jsonCreateUserResponse = await createUserResponse.json();
+console.log("Create user response:", jsonCreateUserResponse);
+expect(createUserResponse.status()).toBe(200);
+expect(jsonCreateUserResponse.id).toBeDefined();
+
+//Take snapshot for current user data
+const getCreatedUserResponse = await request.get(`${GET_USER_API}/${jsonCreateUserResponse.id}`,{
+    headers: {
+        Authorization: token,
+    },
+}
+);
+const jsonGetCreatedUserResponse = await getCreatedUserResponse.json();
+console.log("Get user response:", jsonGetCreatedUserResponse);
+expect(getCreatedUserResponse.status()).toBe(200);
+
+//Update user
+let updateUSerRequestBody = _.cloneDeep(requestBody)
+
+// Modify a little bit data
+updateUSerRequestBody.firstName = "ahihi";
+updateUSerRequestBody.lastName = "ahihi";
+const updateUserResponse = await request.put(`${UPDATE_USER_API}/${jsonCreateUserResponse.id}`, {
+    headers: {
+        Authorization: token,
+    },
+    data: updateUSerRequestBody
+});
+const jsonUpdateUserResponse = await updateUserResponse.json();
+console.log("Update user response:", jsonUpdateUserResponse);
+expect(updateUserResponse.status()).toBe(200);
+//Verify schema => tu lam
+
+//Verify update user response data
+const expectedUpdateResponse ={
+    id: jsonCreateUserResponse.id,
+    message: "Customer updated"
+}
+expect(jsonUpdateUserResponse).toEqual(expectedUpdateResponse);
+//Get edited user data
+
+let actualUserFromDbAfterEdited;
+await knex('customers').where('id', jsonCreateUserResponse.id).then(async (data) =>{
+    actualUserFromDbAfterEdited = data[0];
+    let addresses = await knex('addresses').where('customerId', actualUserFromDbAfterEdited.id);
+    actualUserFromDbAfterEdited.addresses=addresses;
+});
+
+//Verify what should be changed
+expect(actualUserFromDbAfterEdited.firstName).toBe(updateUSerRequestBody.firstName);
+expect(actualUserFromDbAfterEdited.lastName).toBe(updateUSerRequestBody.lastName);
+// expect(new Date(actualUserFromDbAfterEdited.updatedAt).getTime()).toBeGreaterThan(new Date(actualUserFromDbBeforeEdited.updatedAt).getTime());
+
+//Verify what should NOT be changed
+getCreatedUserResponse.firstName = updateUSerRequestBody.firstName;
+getCreatedUserResponse.lastName = updateUSerRequestBody.lastName;
+// Trong truong hop thuc te, neu ko change address -> no se ko change createdDate, updatedDate, id.....
+
+// expect(actualUserFromDbAfterEdited).toEqual(expect.objectContaining(actualUserFromDbBeforeEdited));
+
+//Clean up data
+await request.delete(`${DELETE_USER_API}/${jsonCreateUserResponse.id}`, {
+    headers: {
+        Authorization: token,
+    },
+    });
+});
+
 
