@@ -51,7 +51,100 @@
                             "Content-Type": "application/json"
                         },
                         "body": {
-                            "cardNumber": "79823749832749",
+                            "cardNumber": "79823749832749-sliver",
+                            "name": "Nguyen Mazie",
+                            "expiredDate": "01-23-2030"
+                        }
+                    }
+                }
+            ]
+        },
+
+        {
+            "predicates": [
+                {
+                    "and": [
+                        {
+                            "equals": {
+                                "method": "POST",
+                                "path": "/card-service/build",
+                                "headers": {
+                                    "api-key": "another-private-key"
+                                },
+                                "body": {
+                                    "name": "Nguyen Mazie",
+                                    "cardColor": "Coral",
+                                    "textColor": "White",
+                                    "material": "Plastic"
+                                }
+                            }
+                        },
+                        {
+                            "exists": {
+                                "body": true
+                            },
+                            "jsonpath": {
+                                "selector": "$.id"
+                            }
+                        }
+                    ]
+                }
+            ],
+            "responses": [
+                {
+                    "is": {
+                        "statusCode": 200,
+                        "headers": {
+                            "Content-Type": "application/json"
+                        },
+                        "body": {
+                            "cardNumber": "79823749832749-gold",
+                            "name": "Nguyen Mazie",
+                            "expiredDate": "01-23-2030"
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "predicates": [
+                {
+                    "and": [
+                        {
+                            "equals": {
+                                "method": "POST",
+                                "path": "/card-service/build",
+                                "headers": {
+                                    "api-key": "another-private-key"
+                                },
+                                "body": {
+                                    "name": "Nguyen Mazie",
+                                    "cardColor": "Black",
+                                    "textColor": "Gray",
+                                    "material": "Metal"
+                                }
+                            }
+                        },
+                        {
+                            "exists": {
+                                "body": true
+                            },
+                            "jsonpath": {
+                                "selector": "$.id"
+                            }
+                        }
+                    ]
+                }
+            ],
+            "responses": [
+                {
+                    "is": {
+                        "statusCode": 200,
+                        "headers": {
+                            "Content-Type": "application/json"
+                        },
+                        "body": {
+                            "cardNumber": "79823749832749-platinum",
                             "name": "Nguyen Mazie",
                             "expiredDate": "01-23-2030"
                         }
